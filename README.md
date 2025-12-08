@@ -26,6 +26,8 @@ This project includes a `Storage` contract that supports meta-transactions throu
 - Node.js (v14 or higher)
 - npm or yarn
 - A private key for the relayer account
+- Relayer Address Permissioned and Gas Limit configured by LNet support team
+- Deployer Address Permissioned and Gas Limit bucket configured by LNet support team
 
 ## Installation
 
