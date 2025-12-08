@@ -6,7 +6,7 @@ A Hardhat project for deploying and testing meta-transaction enabled smart contr
 
 ## Overview
 
-This project includes a `Storage` contract that supports meta-transactions through LNet's trusted forwarder, allowing gasless transactions where a relayer is authorized to send tx to the network.
+This project includes a `Storage` contract that supports meta-transactions through **LNet's trusted forwarder**, allowing gasless transactions where a relayer is authorized to send tx to the network.
 
 ## Features
 
