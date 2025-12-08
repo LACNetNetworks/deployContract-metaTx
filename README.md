@@ -40,7 +40,10 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-RELAYER_PK=your_private_key_here
+NETWORK=LNET
+RELAYER_PK=your_relayer_private_key_here
+SENDER_PK=your_sender_private_key_here
+
 ```
 
 ### Network Configuration
@@ -137,7 +140,7 @@ The contract inherits from `ERC2771Context` and requires:
 
 ### Gas Configuration
 
-LNet networks use `gasPrice: 0` as transactions are subsidized by the relayer.
+**LNet** networks use `gasPrice: 0` because transactions are handled by the **relayer** who has a set **gas limit per block**, and in the case of deployers, a **gas bucket per time.**
 
 ## Dependencies
 
