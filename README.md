@@ -16,6 +16,11 @@ This project includes a `Storage` contract that supports meta-transactions throu
 - ✅ Optimized Solidity compiler settings with IR pipeline
 - ✅ Zero gas price configuration for LNet networks
 
+## Architecture
+![image](./metatx.png)
+
+
+
 ## Prerequisites
 
 - Node.js (v14 or higher)
