@@ -1,4 +1,4 @@
-# MetaTx 
+# MetaTx - Open Standards Gas Model
 ## Deploy and Test a Storage Contract
 
 
