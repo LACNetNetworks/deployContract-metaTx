@@ -4,6 +4,8 @@
 
 A Hardhat project for deploying and testing meta-transaction enabled smart contracts on LNet networks. This project demonstrates ERC-2771 meta-transaction implementation using OpenZeppelin's `ERC2771Context`.
 
+> **⚠️ Important:** Before using this project, ensure that both your **relayer address** and **deployer address** are permissioned by the LNet support team with their respective gas limits configured. The relayer requires a gas limit per block, and the deployer requires a gas bucket allocation. Without proper permissions, transactions will fail.
+
 ## Table of Contents
 
 - [Overview](#overview)
