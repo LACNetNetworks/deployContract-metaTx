@@ -46,7 +46,7 @@ async function main() {
   const StorageFactory = await ethers.getContractFactory("Storage");
   const storage = StorageFactory.attach(STORAGE_ADDRESS);
 
-  // Read initial state
+  // Read initial state 
   console.log("📖 Reading initial state...");
   const initialValue = await storage.retrieve();
   const owner = await storage.owner();
