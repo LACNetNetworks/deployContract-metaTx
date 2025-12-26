@@ -1,117 +1,124 @@
-// scripts/deployStorageMeta.ts
+//Depoly a simple Storage contract via meta-transaction using Forwarder and EIP-712
+
 import hre from "hardhat";
 import "dotenv/config";
-import {metaTx} from "../meta-exec-lib/src/index";
-import type { ContractFactory } from "ethers";
-
-metaTx.setLogging(false);
 
 const { ethers } = hre;
-let StorageFactory: ContractFactory;
 
-const HUB_ADDRESS = hre.network.config.hubAddress as string;  // MetaTxForwarder contract address
-const RELAYER_PK = process.env.RELAYER_PK;     // Must be allowlisted in the Hub
-const SENDER_PK = process.env.SENDER_PK;       // Initial owner (user's EOA)
+async function main() {
+  const HUB_ADDRESS = hre.network.config.hubAddress as string;
+  const RELAYER_PK = process.env.RELAYER_PK!;
+  const SENDER_PK = process.env.SENDER_PK!;
 
-console.log("HUB_ADDRESS:", HUB_ADDRESS);
-
-async function main(): Promise<void> {
-  if (!HUB_ADDRESS || !RELAYER_PK || !SENDER_PK) {
-    throw new Error("Faltan env vars: HUB_ADDRESS, RELAYER_PK, SENDER_PK");
+   // Validate  variables
+  if (!HUB_ADDRESS) {
+    throw new Error("❌ hubAddress is not configured on hardhat.config.ts");
+  }
+  if (!RELAYER_PK) {
+    throw new Error("❌ RELAYER_PK is not set in .env file");
+  }
+  if (!SENDER_PK) {
+    throw new Error("❌ SENDER_PK is not set in .env file");
   }
 
-  StorageFactory = await ethers.getContractFactory("Storage");
-
-  console.log("Deploying Storage (EIP-2771) via MetaTxForwarder...\n");
-
-  // 1 Setup wallets
   const provider = ethers.provider;
   const relayer = new ethers.Wallet(RELAYER_PK, provider);
   const sender = new ethers.Wallet(SENDER_PK, provider);
+  const chainId = Number((await provider.getNetwork()).chainId);
 
-  const constructorArgs: string = ethers.AbiCoder.defaultAbiCoder().encode(
-    ["address", "address"],
-    [HUB_ADDRESS, sender.address]
-  );
+  // 1. Prepare bytecode & nonce
+  const StorageFactory  = await ethers.getContractFactory("Storage");
+  const constructorArgs = ethers.AbiCoder.defaultAbiCoder().encode(["address", "address"],[HUB_ADDRESS, sender.address]);
+  const deployBytecode  = StorageFactory.bytecode + constructorArgs.slice(2);
+  const space = 0;
+  const nonce = (BigInt(Date.now()) << 160n) | BigInt(ethers.hexlify(ethers.randomBytes(20)));
 
-  // 2 Combine bytecode + constructor args
-  const deployBytecode: string = StorageFactory.bytecode + constructorArgs.slice(2);
-
-  // 3 Prepare Forward for CREATE
-  const space: number = 0;
-  const nonce: number = Math.floor(Math.random() * 1_000_000);
-
-  const { domain, types, message, fTuple, callData } = await metaTx.prepareForward({
-    provider,
-    metaAddress: HUB_ADDRESS,
-    hasCaller: true,
+  // 2. Build Forward struct
+  const forward = {
     from: sender.address,
-    to: ethers.ZeroAddress, // CREATE deployment
+    to: ethers.ZeroAddress,      // CREATE deployment
     value: 0n,
-    space,
-    nonce,
-    deadlineSec: 3600,
-    callData: deployBytecode,
-    caller: relayer.address,
+    space: space,                // You can use space to namespace nonces
+    nonce: nonce,
+    deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+    dataHash: ethers.keccak256(deployBytecode),
+    caller: relayer.address
+  };
+
+  // 3. EIP-712 Domain & Types
+  const domain = {
+    name: "PermissionedMetaTxHub",
+    version: "1",
+    chainId,
+    verifyingContract: HUB_ADDRESS
+  };
+  const types = {
+    Forward: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "space", type: "uint32" },
+      { name: "nonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "dataHash", type: "bytes32" },
+      { name: "caller", type: "address" }
+    ]
+  };
+
+  // 4. Sign
+  const signature = await sender.signTypedData(domain, types, forward);
+
+  // 5. Encode execute call
+  const hubInterface = new ethers.Interface([
+    "function execute((address,address,uint256,uint32,uint256,uint256,bytes32,address),bytes,bytes) payable"
+  ]);
+
+  const executeData = hubInterface.encodeFunctionData("execute", [
+    [
+      forward.from,
+      forward.to,
+      forward.value,
+      forward.space,
+      forward.nonce,
+      forward.deadline,
+      forward.dataHash,
+      forward.caller
+    ],
+    deployBytecode,
+    signature
+  ]);
+
+  // 6. Execute
+  console.log("Deploying via meta-tx...");
+  const tx = await relayer.sendTransaction({
+    to: HUB_ADDRESS,
+    data: executeData,
+    gasLimit: 10_000_000n,
+    gasPrice: 0n
   });
 
-  // 4 Sign
-  const signature: string = await metaTx.signForward(sender, domain, types, message);
-
-  // 5 Execute using gasPrice 0 and gasLimit high enough
-  console.log(await provider.getTransactionCount(relayer.address,"pending"));
-
-  console.log("📡 Sending meta-tx to hub...");
-  const tx = await metaTx.executeForward({
-    provider,
-    metaAddress: HUB_ADDRESS,
-    fTuple,
-    callData,
-    signature,
-    relayer,
-    overrides: {gasPrice: 0n, gasLimit: 10_000_000n},
-    hasCaller: true,
-    checkAllowlist: true,
-  });
-
-  console.log("Tx hash:", tx.hash);
+  console.log("Tx:", tx.hash);
   const receipt = await tx.wait();
 
-  if (!receipt) {
-    throw new Error("Transaction receipt is null");
+  // 7. Extract address
+  const hubAbi = new ethers.Interface([
+    "event ContractDeployed(address indexed signer, address deployed, bytes32 dataHash)"
+  ]);
+
+  let deployedAddress: string | null = null;
+
+  for (const log of receipt!.logs) {
+    try {
+      const parsed = hubAbi.parseLog({ topics: log.topics as string[], data: log.data });
+      if (parsed?.name === "ContractDeployed") {
+        deployedAddress = parsed.args.deployed;
+        break;
+      }
+    } catch {}
   }
 
-  console.log("✅ Tx mined in block:", receipt.blockNumber, "\n");
+  console.log("✅ Deployed at:", deployedAddress);
 
-  // 6 Get deployed contract address
-  const deployedAddress: string | null = metaTx.getDeployedAddress(
-    receipt,
-    metaTx.abi.META_ABI
-  );
-
-  if (!deployedAddress) {
-    console.log("⚠️  Could not find deployed address in the receipt.");
-    return;
-  }
-
-  console.log("🎉 Storage deployed at:", deployedAddress);
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error: any) => {
-    console.error(error);
-    if (error.data && StorageFactory) {
-      try {
-        const decodedError = StorageFactory.interface.parseError(error.data);
-        if (decodedError) {
-          console.log("Nombre del error:", decodedError.name);
-        }
-      } catch (parseError) {
-        console.log("Error data is present but cannot decode specific error name.");
-      }
-    } else {
-      console.log("Error data is null, cannot decode specific error name.");
-    }
-    process.exit(1);
-  });
+main().catch(console.error);

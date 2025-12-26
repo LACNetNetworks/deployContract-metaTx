@@ -13,14 +13,14 @@ const config: HardhatUserConfig = {
   },
   networks: {
     lnettest: {
-      url: "http://35.185.112.219:4545",
+      url: "http://15.235.42.10:4545",
       accounts: process.env.RELAYER_PK ? [process.env.RELAYER_PK] : [],
       chainId: 648540,
       gasPrice: 0,
-      hubAddress: "0x9a49A9e7b5b07CDd6218624687D3C9FD30e853Bd"
+      hubAddress: "0x4053cA6bcdEc6638d9Ad83a5c74d0246C7670ACd"
     },
-    lnetmain: {
-      url: "http://34.73.228.200:4545",
+    lnetmain: {//
+      url: "https://writer-admin.l-net.io",
       accounts: process.env.RELAYER_PK ? [process.env.RELAYER_PK] : [],
       chainId: 648541,
       gasPrice: 0,
