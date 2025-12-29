@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       hubAddress: "0x4053cA6bcdEc6638d9Ad83a5c74d0246C7670ACd"
     },
-    lnetmain: {//
+    lnetmain: {
       url: "https://mainnet-writer-dev.l-net.io/",  
       accounts: process.env.RELAYER_PK ? [process.env.RELAYER_PK] : [],
       chainId: 648541,
