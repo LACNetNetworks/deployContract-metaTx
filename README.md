@@ -6,7 +6,7 @@ A Hardhat project for deploying and testing meta-transaction enabled smart contr
 
 > **⚠️ Important:** Before using this project, ensure that both your **relayer address** and **deployer address** are permissioned by the LNet support team with their respective gas limits configured. The relayer requires a gas limit per block, and the deployer requires a gas bucket allocation. Without proper permissions, transactions will fail.
 
-## Table of Contents
+## Table of Contents 
 
 - [Overview](#overview)
 - [Features](#features)
@@ -32,7 +32,7 @@ This project includes a `Storage` contract that supports meta-transactions throu
 - **Owner-Controlled Operations**: Storage contract with access-controlled functions
 - **Multi-Network Deployment**: Pre-configured scripts for LNet testnet and mainnet
 - **Optimized Compilation**: Solidity compiler settings with IR pipeline for gas optimization
-- **Zero Gas Price Model**: Configured for LNet's relayer-based transaction system
+- **Zero Gas Price Model**: Configured for LNet's relayer based transaction system
 
 ## Architecture
 ![image](./metatx.png)
