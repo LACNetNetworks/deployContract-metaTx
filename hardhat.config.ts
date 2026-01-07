@@ -12,15 +12,26 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    hardhat: {
+      chainId: 31337,
+      initialBaseFeePerGas: 0,
+      mining: {
+        auto: false,
+        interval: 0,
+      },
+    },
     lnettest: {
       url: "https://testnet-writer-dev.l-net.io/",
+   
       accounts: process.env.RELAYER_PK ? [process.env.RELAYER_PK] : [],
       chainId: 648540,
       gasPrice: 0,
       hubAddress: "0x4053cA6bcdEc6638d9Ad83a5c74d0246C7670ACd"
     },
     lnetmain: {
-      url: "https://mainnet-writer-dev.l-net.io/",  
+      //url: "https://mainnet-writer-dev.l-net.io/",
+      url: "http://34.73.228.200:4545",
+
       accounts: process.env.RELAYER_PK ? [process.env.RELAYER_PK] : [],
       chainId: 648541,
       gasPrice: 0,

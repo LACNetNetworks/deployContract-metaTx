@@ -136,6 +136,31 @@ Run the full test suite locally:
 npx hardhat test
 ```
 
+#### Transaction Replacement Testing
+
+Test transaction replacement with gas price 0 (requires node started with `--tx-pool-price-bump=0`):
+
+```bash
+# Run local transaction replacement tests
+npm run test:replacement
+
+# Test transaction replacement on testnet
+npm run test:replacement:testnet
+
+# Test transaction replacement on mainnet
+npm run test:replacement:mainnet
+```
+
+The transaction replacement test (`scripts/testTransactionReplacement.ts`) verifies:
+- Basic transaction replacement with same gas price (0)
+- Multiple consecutive replacements with the same nonce
+- Only one transaction is mined per nonce
+- Replaced transactions are correctly discarded
+
+**Requirements:**
+- Node must be started with `--tx-pool-price-bump=0` parameter
+- Environment variable `STORAGE_ADDRESS_TEST` must be set
+
 ### Additional Commands
 
 ```bash
@@ -174,21 +199,23 @@ This script demonstrates how to use the `executeContractViaMetaTx()` function fr
 ```
 .
 ├── contracts/
-│   └── Storage.sol                    # ERC-2771 enabled storage contract
+│   └── Storage.sol                      # ERC-2771 enabled storage contract
 ├── scripts/
-│   ├── deployStorage.ts               # Direct deployment script
-│   ├── deployStorageUsingLib.ts       # Deployment using lib
-│   ├── testStorage.ts                 # Direct testing script
-│   └── testStorageUsingLib.ts         # Testing using lib
+│   ├── deployStorage.ts                 # Direct deployment script
+│   ├── deployStorageUsingLib.ts         # Deployment using lib
+│   ├── testStorage.ts                   # Direct testing script
+│   ├── testStorageUsingLib.ts           # Testing using lib
+│   └── testTransactionReplacement.ts    # Transaction replacement test for testnet
 ├── lib/
 │   └── src/
-│       ├── metaTxAbi.ts               # EIP-712 types and ABI definitions
-│       ├── metaTxDeploy.ts            # Contract deployment via meta-tx
-│       └── metaTxExecute.ts           # Contract execution via meta-tx
-├── test/                              # Test files
-├── ignition/                          # Hardhat Ignition modules
-├── hardhat.config.ts                  # Hardhat configuration
-├── .env                               # Environment variables (not in git)
+│       ├── metaTxAbi.ts                 # EIP-712 types and ABI definitions
+│       ├── metaTxDeploy.ts              # Contract deployment via meta-tx
+│       └── metaTxExecute.ts             # Contract execution via meta-tx
+├── test/
+│   └── TransactionReplacement.test.ts   # Local transaction replacement tests
+├── ignition/                            # Hardhat Ignition modules
+├── hardhat.config.ts                    # Hardhat configuration
+├── .env                                 # Environment variables (not in git)
 └── package.json
 ```
 

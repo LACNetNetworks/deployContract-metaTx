@@ -1,5 +1,10 @@
 {
   "name": "hardhat-project",
+  "scripts": {
+    "test:replacement": "hardhat test test/TransactionReplacement.test.ts",
+    "test:replacement:testnet": "hardhat run scripts/testTransactionReplacement.ts --network lnettest",
+    "test:replacement:mainnet": "hardhat run scripts/testTransactionReplacement.ts --network lnetmain"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "hardhat": "^2.27.1"
